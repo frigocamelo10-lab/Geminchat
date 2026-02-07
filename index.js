@@ -3,19 +3,16 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-// Forçamos a conexão para não usar v1beta
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-app.get("/", (req, res) => res.send("Servidor v1 Online"));
+app.get("/", (req, res) => res.send("Servidor Gemini 1.0 Estável"));
 
 app.post("/chat", async (req, res) => {
     try {
-        // Usamos o modelo padrão sem o sufixo "-latest" para evitar o erro 404
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash"
-        });
+        // Mudamos para o gemini-1.0-pro que é mais compatível com chaves gratuitas
+        const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
         
-        const prompt = `Responda curto para o Roblox: ${req.body.text}`;
+        const prompt = `Responda de forma curta ao player do Roblox: ${req.body.text}`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
