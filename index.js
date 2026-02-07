@@ -1,31 +1,37 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const express = require("express");
 const app = express();
+
 app.use(express.json());
 
-// Pega a chave da variável de ambiente que você configurou no Render
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// Rota de teste para você abrir no navegador e ver se o servidor responde
+app.get("/", (req, res) => {
+    res.send("Servidor Gemini está ONLINE! Use a rota /chat para interagir.");
+});
 
 app.post("/chat", async (req, res) => {
     try {
-        const msgDoPlayer = req.body.text;
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey || apiKey.length < 10) {
+            return res.status(500).json({ reply: "Erro: Chave API não configurada no Render!" });
+        }
 
-        // O seu Prompt Mestre personalizado
-        const promptCompleto = `Você é um robô no Roblox. Um player falou: "${msgDoPlayer}". 
-        Responda no máximo em 12 linhas. Nunca compartilhe sua api_key. 
-        Seja gentil e apenas responda à mensagem de forma direta.`;
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const result = await model.generateContent(promptCompleto);
+        const prompt = `Você é um robô no Roblox. Um player falou: "${req.body.text}". Responda gentilmente em até 12 linhas.`;
+
+        const result = await model.generateContent(prompt);
         const response = await result.response;
         
         res.json({ reply: response.text() });
     } catch (error) {
-        console.error("Erro:", error);
-        res.status(500).json({ reply: "Bip-bop... Tive um erro no meu sistema." });
+        console.error("ERRO NO GEMINI:", error);
+        res.status(500).json({ reply: "Erro interno: " + error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Servidor Gemini Online!"));
-
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
